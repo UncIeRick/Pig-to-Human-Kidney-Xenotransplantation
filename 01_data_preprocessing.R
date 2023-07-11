@@ -9,19 +9,27 @@ library(ggplot2)
 library(cowplot)
 library(rhdf5)
 
-##### set working directory #####
-setwd("/Users/fifi/Desktop/Xia Lab/xenotransplant")
-
 ##### Step 1: Find Homologous Genes between Human and Pig #####
-# starting database genes: 554797 genes
-homolog_database <- read.table(file = "data/Pig_Human_Homolog_gene.txt", header = T, fill = T, row.names = NULL)
-homolog_database <- homolog_database[, c(4, 6, 12, 14)] # 554797 genes
-# rename the columns
-colnames(homolog_database) <- c("organism1", "gene1", "organism2", "gene2")
-# Filter the rows containing "Human" or "Pig" in organism1 and organism2. Other values include eggNOG:xxx; TreeFam: xxx; Panther:xxx
-homolog_filtered <- homolog_database %>%
-  filter((organism1 == "Human" & organism2 == "Pig") | (organism2 == "Human" & organism1 == "Pig"))
-# 529988 homo-genes left
+# Starting database is downloadable from: https://download.cncb.ac.cn/hgd/homolog_gene/Pig_Human_Homolog_gene.txt.gz
+# This file is not included in the data folder as its size 121.21MB exceeds Github's maximum capacity per file (100MB).
+# An edited version is included in the data folder. Code that performed this edit is below but commented out.
+
+# homolog_database <- read.table(file = "data/Pig_Human_Homolog_gene_OG.txt", header = T, fill = T, row.names = NULL)
+# homolog_database <- homolog_database[, c(4, 6, 12, 14)] # 554797 genes
+
+# # rename the columns
+# colnames(homolog_database) <- c("organism1", "gene1", "organism2", "gene2")
+
+# # Filter the rows containing "Human" or "Pig" in organism1 and organism2. Other values include eggNOG:xxx; TreeFam: xxx; Panther:xxx
+# homolog_filtered <- homolog_database %>%
+#   filter((organism1 == "Human" & organism2 == "Pig") | (organism2 == "Human" & organism1 == "Pig"))
+
+# # 529988 homo-genes left. Store edited version of database.
+# write.csv(homolog_filtered, "data/homolog_filtered.csv")
+
+# Load in edited version of database
+homolog_filtered <- read.csv("data/homolog_filtered.csv")
+
 homolog_filtered <- homolog_filtered %>%
   filter(gene1 == gene2) %>%
   distinct(gene1, gene2, .keep_all = TRUE)
@@ -29,6 +37,7 @@ homolog_filtered <- homolog_filtered %>%
 homolog_list = homolog_filtered$gene1 # human_genes = pig_genes
 saveRDS(homolog_list, "data/homolog_list.rds")
 # homolog_list <- readRDS("data/homolog_list.rds")
+
 ##### Step 2: Create Expression Matrices #####
 # Kidney 1:
 # note: A and B are technical replicates of each other
@@ -585,4 +594,4 @@ DimPlot(kidneys, reduction = "umap")
 DimPlot(kidneys, reduction = "umap", label = T,
                           split.by = "origin")
 # save for downstream analysis
-saveRDS(kidneys, "data/kidneys.rds")
+saveRDS(kidneys, "data/both_conditions_kidney.rds")
